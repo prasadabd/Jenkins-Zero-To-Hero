@@ -9,7 +9,6 @@ pipeline {
 
   environment {
     APP_DIR = "java-maven-sonar-argocd-helm-k8s/spring-boot-app"
-    SONARQUBE_URL = "http://172.178.42.239:9000"
     DOCKER_IMAGE = "prasadabd/springboot-app:${BUILD_NUMBER}"
   }
 
@@ -31,18 +30,17 @@ pipeline {
     }
 
     stage('SonarQube Analysis') {
-      environment {
-        SONAR_AUTH_TOKEN = credentials('sonar-token')
-      }
       steps {
         withSonarQubeEnv('sonarqube') {
-          sh """
-            cd ${APP_DIR}
-            mvn sonar:sonar \
-              -Dsonar.projectKey=springboot-app \
-              -Dsonar.host.url=${SONARQUBE_URL} \
-              -Dsonar.login=$SONAR_AUTH_TOKEN
-          """
+          withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_AUTH_TOKEN')]) {
+            sh """
+              cd ${APP_DIR}
+              mvn sonar:sonar \
+                -Dsonar.projectKey=springboot-app \
+                -Dsonar.host.url=$SONAR_HOST_URL \
+                -Dsonar.login=$SONAR_AUTH_TOKEN
+            """
+          }
         }
       }
     }
